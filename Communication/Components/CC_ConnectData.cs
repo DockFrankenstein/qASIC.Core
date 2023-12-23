@@ -6,20 +6,15 @@
 
         public override void Read(CommsComponentArgs args)
         {
-
             switch (args.packetType)
             {
                 case PacketType.Server:
                     args.server!.Send(args.targetServerClient!, CreateServerResponsePacket(args.server!));
                     break;
                 case PacketType.Client:
-                    var info = args.packet.ReadNetworkSerializable<NetworkServerInfo>();
-
-                    args.client!.CurrentState = Client.State.Connected;
-                    args.client!.receivedPing = true;
-                    args.client!.OnLog?.Invoke("Client connected");
-
-                    args.client?.OnLog?.Invoke($"Connected to project using protocol version: {info.protocolVersion}");
+                    var info = args.client!.ProcessAppInfo == null ?
+                        (NetworkServerInfo)args.packet.ReadNetworkSerializable(args.client!.AppInfo) :
+                        args.client!.ProcessAppInfo(args.packet);
 
                     if (info.protocolVersion > Constants.PROTOCOL_VERSION)
                     {
@@ -28,11 +23,16 @@
                         return;
                     }
 
+                    args.client?.OnLog?.Invoke($"Connected to project using protocol version: {info.protocolVersion}");
                     args.client!.AppInfo = info;
+                    args.client!.CurrentState = Client.State.Connected;
+                    args.client!.receivedPing = true;
+                    args.client!.OnLog?.Invoke("Client connected");
+                    args.client!.OnConnect?.Invoke();
+
                     OnRead?.Invoke(info);
                     break;
             }
-
         }
 
         public static Packet CreateClientConfirmationPacket() =>

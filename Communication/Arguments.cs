@@ -26,5 +26,18 @@
         public Server? server;
 
         public Server.Client? targetServerClient;
+
+        public void Log(string message)
+        {
+            switch (packetType)
+            {
+                case PacketType.Server:
+                    server!.OnLog?.Invoke(message);
+                    break;
+                case PacketType.Client:
+                    client!.OnLog?.Invoke(message);
+                    break;
+            }
+        }
     }
 }

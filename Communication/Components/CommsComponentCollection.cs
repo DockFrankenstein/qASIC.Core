@@ -32,8 +32,8 @@ namespace qASIC.Communication.Components
             return this;
         }
 
-        public CommsComponent? GetComponent<T>() where T : CommsComponent =>
-            GetComponent(typeof(T));
+        public T? GetComponent<T>() where T : CommsComponent =>
+            GetComponent(typeof(T)) as T;
 
         public CommsComponent? GetComponent(Type type)
         {
@@ -42,6 +42,15 @@ namespace qASIC.Communication.Components
 
             return componentsDictionary[type];
         }
+
+        public T[] GetComponents<T>() where T : CommsComponent =>
+            (T[])GetComponents(typeof(T));
+
+        public CommsComponent[] GetComponents(Type type) =>
+            componentsDictionary
+                .Select(x => x.Value)
+                .Where(x => type.IsAssignableFrom(x.GetType()))
+                .ToArray();
 
         public void HandlePacketForServer(Server server, Server.Client serverClient, Packet packet)
         {

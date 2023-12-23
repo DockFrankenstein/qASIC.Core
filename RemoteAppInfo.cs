@@ -9,18 +9,27 @@ namespace qASIC
         public string engine = string.Empty;
         public string engineVersion = string.Empty;
 
-        public List<SystemInfo> componentList = new List<SystemInfo>();
+        public List<SystemInfo> systems = new List<SystemInfo>();
+
+        public void RegisterSystem(string systemInfo, string version)
+        {
+            if (!UsesSystem(systemInfo))
+                systems.Add(new SystemInfo(systemInfo, version));
+        }
+
+        public bool UsesSystem(string systemName) =>
+            systems.Any(x => x.name == systemName);
 
         public override Packet Write(Packet packet)
         {
-            Write(packet)
+            base.Write(packet)
                 .Write(projectName)
                 .Write(version)
                 .Write(engine)
                 .Write(engineVersion)
-                .Write(componentList.Count);
+                .Write(systems.Count);
 
-            foreach (var item in componentList)
+            foreach (var item in systems)
                 packet.Write(item.name)
                     .Write(item.version);
 
@@ -35,10 +44,10 @@ namespace qASIC
             engine = packet.ReadString();
             engineVersion = packet.ReadString();
 
-            componentList.Clear();
+            systems.Clear();
             for (int i = 0; i < packet.ReadInt(); i++)
             {
-                componentList.Add(new SystemInfo()
+                systems.Add(new SystemInfo()
                 {
                     name = packet.ReadString(),
                     version = packet.ReadString(),
@@ -48,6 +57,12 @@ namespace qASIC
 
         public struct SystemInfo
         {
+            public SystemInfo(string name, string version)
+            {
+                this.name = name;
+                this.version = version;
+            }
+
             public string name;
             public string version;
         }

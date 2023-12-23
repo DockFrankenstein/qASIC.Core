@@ -6,7 +6,7 @@ using qASIC.Communication.Components;
 
 namespace qASIC.Communication
 {
-    public class Client
+    public class Client : IPeer
     {
         public Client(CommsComponentCollection components, IPAddress address, int port, int maxConnectionAttempts = 5)
         {
@@ -60,6 +60,7 @@ namespace qASIC.Communication
         public Action<string>? OnLog;
         public Action? OnConnect;
         public Action<DisconnectReason>? OnDisconnect;
+        public Func<Packet, NetworkServerInfo>? ProcessAppInfo = null;
 
         private byte[] buffer = new byte[0];
         private System.Diagnostics.Stopwatch time = new System.Diagnostics.Stopwatch();
@@ -69,7 +70,6 @@ namespace qASIC.Communication
         public bool logPacketSend = false;
 
         PriorityQueue<KeyValuePair<Action, long>, long> eventQueue = new PriorityQueue<KeyValuePair<Action, long>, long>();
-
 
         public void Update()
         {

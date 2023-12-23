@@ -18,7 +18,7 @@ namespace qASIC.Communication
 
         public byte[] ReadCurrentBytes(int length)
         {
-            byte[] currentBytes = bytes.Count - position >= length?
+            byte[] currentBytes = bytes.Count - position >= length ?
                 bytes.GetRange(position, length).ToArray() :
                 new byte[length];
 
@@ -37,11 +37,13 @@ namespace qASIC.Communication
         public ulong ReadULong() => BitConverter.ToUInt64(ReadCurrentBytes(sizeof(ulong)), 0);
         public string ReadString() => Encoding.UTF8.GetString(ReadCurrentBytes(ReadInt()));
 
-        public T ReadNetworkSerializable<T>() where T : INetworkSerializable, new()
+        public T ReadNetworkSerializable<T>() where T : INetworkSerializable, new() =>
+            (T)ReadNetworkSerializable(new T());
+
+        public object ReadNetworkSerializable(INetworkSerializable serializable)
         {
-            var item = new T();
-            item.Read(this);
-            return item;
+            serializable.Read(this);
+            return serializable;
         }
 
         public Packet WriteBytes(params byte[] data)

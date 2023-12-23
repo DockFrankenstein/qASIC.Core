@@ -4,7 +4,7 @@ using qASIC.Communication.Components;
 
 namespace qASIC.Communication
 {
-    public class Server
+    public class Server : IPeer
     {
         public Server(CommsComponentCollection components, int port)
         {
@@ -25,6 +25,7 @@ namespace qASIC.Communication
 
         public TcpListener Listener { get; private set; }
 
+        public event Action<Client> OnClientConnect;
         public Action<string>? OnLog;
 
         int nextClientId;
@@ -37,7 +38,7 @@ namespace qASIC.Communication
 
             OnLog?.Invoke("Starting server...");
             Listener.Start();
-            Listener.BeginAcceptTcpClient(new AsyncCallback(OnClientConnect), null);
+            Listener.BeginAcceptTcpClient(new AsyncCallback(HandleClientConnect), null);
 
             nextClientId = 0;
             IsActive = true;
@@ -94,7 +95,7 @@ namespace qASIC.Communication
         }
 
         #region Callbacks
-        private void OnClientConnect(IAsyncResult result)
+        private void HandleClientConnect(IAsyncResult result)
         {
             if (!IsActive)
                 return;
@@ -106,7 +107,7 @@ namespace qASIC.Communication
                 clientSocket.ReceiveBufferSize = Constants.RECEIVE_BUFFER_SIZE;
                 clientSocket.SendBufferSize = Constants.SEND_BUFFER_SIZE;
 
-                Listener.BeginAcceptTcpClient(new AsyncCallback(OnClientConnect), null);
+                Listener.BeginAcceptTcpClient(new AsyncCallback(HandleClientConnect), null);
 
                 Client newClient = new Client(nextClientId, clientSocket, HandleDataReceive, OnLog);
                 Clients.Add(newClient);
@@ -115,6 +116,7 @@ namespace qASIC.Communication
                 nextClientId++;
 
                 OnLog?.Invoke($"Client connected id: '{newClient.id}'");
+                OnClientConnect?.Invoke(newClient);
             }
             catch (Exception e)
             {
@@ -155,6 +157,9 @@ namespace qASIC.Communication
                 if (Clients[i] != null)
                     Send(Clients[i], packet);
         }
+
+        void IPeer.Send(Packet packet) =>
+            SendToAll(packet);
         #endregion
 
 

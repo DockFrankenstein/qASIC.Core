@@ -25,6 +25,7 @@ namespace qASIC
             this.message = message;
             this.logType = logType;
             this.color = color;
+            colorTag = null;
         }
 
         public Log(DateTime time, string message, LogType logType, string colorTag)
@@ -39,7 +40,7 @@ namespace qASIC
         public string message = string.Empty;
         public LogType logType = LogType.Application;
         public string? colorTag = qDebug.DEFAULT_COLOR_TAG;
-        public Color? color = null;
+        public Color color = Color.White;
 
         public static Log CreateNow(string message, Color color) =>
             new Log(DateTime.Now, message, color);
@@ -63,8 +64,7 @@ namespace qASIC
             .Write((byte)logType)
             .Write(colorTag == null)
             .Write(colorTag ?? string.Empty)
-            .Write(color == null)
-            .Write(color ?? new Color());
+            .Write(color);
         
         public void Read(Packet packet)
         {
@@ -77,10 +77,7 @@ namespace qASIC
             if (nullColorTag)
                 colorTag = null;
 
-            bool nullColor = packet.ReadBool();
             color = packet.ReadNetworkSerializable<Color>();
-            if (nullColor)
-                color = null;
         }
     }
 }
